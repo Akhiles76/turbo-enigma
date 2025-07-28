@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Touch to Hide Numbers</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: white;
+    }
+
+    .start-screen, .game-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .start-screen.active, .game-screen.active {
+      display: flex;
+    }
+
+    .start-screen h2 {
+      margin-top: 40px;
+      font-size: 24px;
+    }
+
+    .move-buttons {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .move-buttons button {
+      padding: 12px 20px;
+      font-size: 18px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .move-buttons button:active {
+      transform: scale(0.95);
+    }
+
+    .counter {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr); /* ✅ Fixed 6 columns */
+      gap: 3px;
+      width: 100%;
+      max-width: 500px;
+      padding: 10px;
+      margin-top: 10px;
+      box-sizing: border-box;
+    }
+
+    .number {
+      font-size: 16vw;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .number.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.5);
+    }
+
+    .controls {
+      margin: 20px 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      background-color: #000;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Start Screen -->
+  <div class="start-screen active" id="startScreen">
+    <h2>Select Move Count</h2>
+    <div class="move-buttons">
+      <button onclick="startGame(24)">24 Moves</button>
+      <button onclick="startGame(30)">30 Moves</button>
+      <button onclick="startGame(36)">36 Moves</button>
+      <button onclick="startGame(42)">42 Moves</button>
+      <button onclick="startGame(48)">48 Moves</button>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div class="game-screen" id="gameScreen">
+    <div class="counter">
+      Moves Remaining: <span id="moveCount">0</span>
+    </div>
+    <div class="grid" id="numberGrid"></div>
+    <div class="controls">
+      <button onclick="undo()">↩️ Undo</button>
+      <button onclick="reset()">🔄 Reset</button>
+      <button onclick="goBack()">🔙 Back</button>
+    </div>
+  </div>
+
+  <script>
+    let totalMoves = 48;
+    let currentMoves = 48;
+    const visibleCols = 6;
+    let visibleRows = 8;
+
+    const numberGrid = document.getElementById("numberGrid");
+    const moveCount = document.getElementById("moveCount");
+    const startScreen = document.getElementById("startScreen");
+    const gameScreen = document.getElementById("gameScreen");
+
+    const history = [];
+    let numbers = [];
+
+    function startGame(moves) {
+      totalMoves = moves;
+      currentMoves = moves;
+      visibleRows = Math.ceil(moves / visibleCols); // Adjust rows
+      startScreen.classList.remove("active");
+      gameScreen.classList.add("active");
+      createGrid();
+      updateMoveCount();
+    }
+
+    function createGrid() {
+      numberGrid.innerHTML = '';
+      numbers = [];
+
+      for (let row = 0; row < visibleRows; row++) {
+        for (let col = 0; col < visibleCols; col++) {
+          const i = row * visibleCols + col;
+          if (i < totalMoves) {
+            const num = (i % 6) + 1;
+            const div = document.createElement("div");
+            div.className = "number";
+            div.textContent = num;
+            div.dataset.index = i;
+            div.addEventListener("click", () => hideNumber(i));
+            numberGrid.appendChild(div);
+            numbers.push(div);
+          }
+        }
+      }
+    }
+
+    function updateMoveCount() {
+      moveCount.textContent = currentMoves;
+    }
+
+    function hideNumber(index) {
+      const el = numbers[index];
+      if (!el.classList.contains("hidden") && currentMoves > 0) {
+        el.classList.add("hidden");
+        history.push(index);
+        currentMoves--;
+        updateMoveCount();
+      }
+    }
+
+    function undo() {
+      if (history.length > 0) {
+        const last = history.pop();
+        numbers[last].classList.remove("hidden");
+        currentMoves++;
+        updateMoveCount();
+      }
+    }
+
+    function reset() {
+      history.length = 0;
+      numbers.forEach(num => num.classList.remove("hidden"));
+      currentMoves = totalMoves;
+      updateMoveCount();
+    }
+
+    function goBack() {
+      gameScreen.classList.remove("active");
+      startScreen.classList.add("active");
+      numberGrid.innerHTML = '';
+      history.length = 0;
+      currentMoves = totalMoves;
+      moveCount.textContent = '0';
+    }
+  </script>
+</body>
+</html>
